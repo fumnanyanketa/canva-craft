@@ -16,6 +16,11 @@ const schema = z.object({
   PORT: z.coerce.number().default(4000),
   APP_BASE_URL: z.string().url().default("http://localhost:4000"),
   WEB_ORIGIN: z.string().default("http://localhost:5173"),
+  // Run the in-process scheduler in this instance (disable on extra replicas).
+  SCHEDULER_ENABLED: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
 
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 chars"),
