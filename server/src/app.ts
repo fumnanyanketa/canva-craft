@@ -3,6 +3,8 @@ import cors from "@fastify/cors";
 import { env } from "./env.js";
 import { healthRoutes } from "./routes/health.js";
 import { authRoutes } from "./routes/auth.js";
+import { oauthRoutes } from "./routes/oauth.js";
+import { accountRoutes } from "./routes/accounts.js";
 
 export function buildApp() {
   const app = Fastify({
@@ -16,6 +18,8 @@ export function buildApp() {
 
   app.register(healthRoutes);
   app.register(authRoutes);
+  app.register(oauthRoutes);
+  app.register(accountRoutes);
 
   return app;
 }
