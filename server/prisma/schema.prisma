@@ -1,0 +1,153 @@
+// Metricool Lite — data model for real IG + TikTok posting & analytics.
+// See ARCHITECTURE.md for the rationale behind each model.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Platform {
+  instagram
+  tiktok
+}
+
+enum PostStatus {
+  draft
+  scheduled
+  publishing
+  published
+  failed
+}
+
+enum TargetStatus {
+  pending
+  publishing
+  published
+  failed
+}
+
+enum MediaKind {
+  image
+  video
+}
+
+/// An application user (the person using our tool).
+model User {
+  id           String             @id @default(cuid())
+  email        String             @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  accounts     ConnectedAccount[]
+  posts        Post[]
+  media        Media[]
+}
+
+/// A connected social profile (one row per platform account a user links).
+/// Access/refresh tokens are stored ENCRYPTED (AES-256-GCM); never plaintext.
+model ConnectedAccount {
+  id                 String              @id @default(cuid())
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId             String
+  platform           Platform
+  /// Platform's own id for the account (e.g. IG user id, TikTok open_id).
+  externalId         String
+  username           String?
+  displayName        String?
+  avatarUrl          String?
+
+  accessTokenEnc     String
+  refreshTokenEnc    String?
+  expiresAt          DateTime?
+  scopes             String[]
+
+  /// Instagram-specific: the linked Facebook Page id needed for publishing.
+  metaPageId         String?
+
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  targets            PostTarget[]
+  snapshots          AnalyticsSnapshot[]
+
+  @@unique([platform, externalId])
+  @@index([userId])
+}
+
+/// A piece of media uploaded by the user, hosted at a public URL (R2).
+/// Instagram requires a publicly fetchable URL before publishing.
+model Media {
+  id        String     @id @default(cuid())
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  kind      MediaKind
+  r2Key     String
+  publicUrl String
+  mimeType  String
+  width     Int?
+  height    Int?
+  createdAt DateTime   @default(now())
+
+  posts     Post[]
+
+  @@index([userId])
+}
+
+/// A composed post. Fans out to one or more platforms via PostTarget.
+model Post {
+  id          String       @id @default(cuid())
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  caption     String
+  media       Media?       @relation(fields: [mediaId], references: [id])
+  mediaId     String?
+  scheduledAt DateTime
+  status      PostStatus   @default(scheduled)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  targets     PostTarget[]
+
+  @@index([userId])
+  @@index([status, scheduledAt])
+}
+
+/// Per-platform delivery of a Post (the fan-out + result of publishing).
+model PostTarget {
+  id              String           @id @default(cuid())
+  post            Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId          String
+  account         ConnectedAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId       String
+  status          TargetStatus     @default(pending)
+  /// The id the platform assigned to the published post (for later analytics).
+  externalPostId  String?
+  error           String?
+  attempts        Int              @default(0)
+  publishedAt     DateTime?
+
+  @@index([postId])
+  @@index([accountId])
+}
+
+/// Periodic snapshot of an account's headline metrics, powering the dashboard.
+model AnalyticsSnapshot {
+  id          String           @id @default(cuid())
+  account     ConnectedAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId   String
+  capturedFor DateTime         // the day this snapshot represents (UTC date)
+  followers   Int
+  reach       Int
+  impressions Int
+  engagement  Int
+  createdAt   DateTime         @default(now())
+
+  @@unique([accountId, capturedFor])
+  @@index([accountId])
+}
