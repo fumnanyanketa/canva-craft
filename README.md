@@ -1,10 +1,18 @@
 # Metricool Lite
 
-A stripped-down [Metricool](https://metricool.com) — a social media management
-dashboard with **analytics**, a **content calendar/scheduler**, **multi-brand
-switching**, and **exportable reports**. Built as a fast, self-contained SPA that
-runs instantly on realistic demo data, with a data layer designed to be swapped
-for real social APIs later.
+A stripped-down [Metricool](https://metricool.com): a focused social media tool
+that **really schedules and auto-publishes posts to Instagram + TikTok**, with
+analytics, a content calendar, and exportable reports. See `PROJECT_PLAN.md` for
+the shareable overview, `ARCHITECTURE.md` for the design, and `SETUP.md` for the
+credentials checklist.
+
+Two modes, sharing every component:
+
+- **Real mode** (sign in): accounts, media, scheduling, and publishing go through
+  the backend in `server/` — the scheduler publishes your posts automatically and
+  collects daily analytics from your connected accounts.
+- **Demo mode** (no account needed): the full UI on realistic generated data.
+  Nothing leaves the browser. Perfect for showing people the product.
 
 ## Features
 
@@ -29,30 +37,44 @@ React Router · TanStack Query · Zustand · date-fns.
 
 ## Getting started
 
+**Frontend only (demo mode):**
+
 ```bash
 npm install
-npm run dev      # start the dev server (http://localhost:5173)
+npm run dev      # http://localhost:5173 → click "Explore the demo"
+```
+
+**Full stack (real mode):**
+
+```bash
+# Terminal 1 — backend (needs a Postgres URL; see server/README.md)
+cd server && cp .env.example .env   # fill DATABASE_URL, JWT_SECRET, TOKEN_ENCRYPTION_KEY
+npm install && npm run prisma:push && npm run dev   # http://localhost:4000
+
+# Terminal 2 — frontend
+npm install && npm run dev          # http://localhost:5173 → create an account
+```
+
+Connecting real Instagram/TikTok and publishing additionally needs platform
+credentials and media storage — the full checklist is in `SETUP.md`.
+
+```bash
 npm run build    # type-check + production build
 npm run preview  # preview the production build
 ```
 
-## Architecture: "mock now, real later"
+## Architecture: two data paths, one UI
 
-All data flows through a single interface, `SocialClient`
-(`src/services/client.ts`). Today it's implemented by a `MockClient`
-(`src/services/mock/`) that generates stable, seeded demo data. React Query hooks
-(`src/hooks/useSocialData.ts`) and every component talk only to this interface.
+- **Demo:** components → React Query hooks (`src/hooks/useSocialData.ts`) →
+  mock `SocialClient` (`src/services/mock/`) generating stable, seeded data.
+- **Real:** components → real-data hooks (`src/hooks/useRealData.ts`) → HTTP
+  client (`src/lib/api.ts`) → the Fastify API in `server/`, which owns OAuth,
+  encrypted tokens, media (R2), the publish scheduler, and analytics ingestion.
 
-To connect real platforms (Instagram, X, etc.):
-
-1. Add `src/services/real/realClient.ts` implementing `SocialClient` against the
-   real APIs.
-2. Change the one export in `src/services/index.ts`:
-   ```ts
-   export const client: SocialClient = new RealClient();
-   ```
-
-No hooks, pages, or components need to change.
+Server posts are mapped into the same UI shapes the demo uses, so pages and
+components never branch on mode. Analytics charts currently run on demo data in
+both modes (real snapshots are already being collected server-side; the
+dashboard switchover is the next step).
 
 ## Project structure
 
@@ -69,7 +91,8 @@ src/
 
 ## Notes
 
-This is a demo: all metrics are simulated and deterministic per brand/range.
-Scheduled posts you create are stored in your browser's `localStorage`. Out of
-scope (the "stripped down"): real OAuth integrations, unified inbox, ads, link in
-bio, team auth, and a backend.
+In demo mode, metrics are simulated and deterministic per brand/range, and
+scheduled posts live in your browser's `localStorage`. In real mode, posts are
+stored server-side and published automatically. Deliberately out of scope for
+v1 (the "stripped down"): networks beyond Instagram/TikTok, unified inbox, ads,
+link in bio, and team seats — see `PROJECT_PLAN.md` §5.

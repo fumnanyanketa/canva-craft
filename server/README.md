@@ -4,7 +4,7 @@ The backend that makes posting & analytics real. Fastify + TypeScript + Prisma
 (Postgres). See `../ARCHITECTURE.md` for the overall design and `../SETUP.md` for
 the credentials/infra checklist.
 
-## Status: Phases 1–4 complete (posting pipeline)
+## Status: Phases 1–5 complete (posting + analytics pipeline)
 
 Implemented so far:
 
@@ -22,14 +22,16 @@ Implemented so far:
 - **Publishers** — Instagram (container → publish, polls video) and TikTok
   (PULL_FROM_URL, polls status) behind one `Publisher` seam
   (`src/lib/publishers/`), with TikTok token refresh.
-- **Scheduler** — in-process worker publishes due posts every minute
-  (`src/scheduler.ts`).
+- **Scheduler** — in-process worker publishes due posts every minute and takes
+  daily analytics snapshots hourly (`src/scheduler.ts`).
+- **Analytics ingestion** — daily follower/reach/engagement snapshots per
+  account (IG Insights + TikTok Display API, defensive per-metric fetching),
+  served via `GET /api/analytics` (`src/lib/analytics/`, `src/services/analytics.ts`).
 
-Next: real analytics ingestion (Phase 5) and the frontend wiring to this API.
-
-> **Testing the real posting path** requires platform credentials + a deployed
-> HTTPS URL (`SETUP.md`). The code is complete and type-checked; live posting is
-> validated once those exist.
+Verified end-to-end against a real Postgres: register → connect (encrypted
+tokens) → schedule → scheduler claim → publish attempt with per-target error
+capture → analytics series. A *successful* publish additionally requires real
+platform credentials + a public HTTPS URL (`SETUP.md`).
 
 ## Run it locally
 
@@ -60,6 +62,7 @@ You only need a Postgres URL to run Phase 1 — no platform credentials yet.
 | GET | `/api/posts` | Bearer | List posts with targets |
 | POST | `/api/posts` | Bearer | Create + schedule a post |
 | DELETE | `/api/posts/:id` | Bearer | Delete a not-yet-published post |
+| GET | `/api/analytics?days=N` | Bearer | Daily metric series per connected account |
 
 ## Database migrations
 

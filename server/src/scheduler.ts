@@ -1,8 +1,10 @@
 import type { FastifyBaseLogger } from "fastify";
 import { prisma } from "./db.js";
 import { publishPost } from "./services/publish.js";
+import { snapshotDueAccounts } from "./services/analytics.js";
 
-const TICK_MS = 60_000; // check every minute
+const TICK_MS = 60_000; // publish check every minute
+const SNAPSHOT_MS = 60 * 60_000; // analytics snapshot check every hour
 
 /**
  * Lightweight in-process scheduler: every minute, claim posts whose time has
@@ -38,11 +40,26 @@ export function startScheduler(log: FastifyBaseLogger) {
     }
   }
 
-  const timer = setInterval(tick, TICK_MS);
-  // Don't keep the event loop alive solely for the timer.
-  timer.unref?.();
-  log.info("Scheduler started (60s interval)");
-  void tick(); // run once on boot
+  // Daily analytics snapshots, checked hourly (each account gets one row/day).
+  async function snapshotTick() {
+    try {
+      await snapshotDueAccounts(log);
+    } catch (err) {
+      log.error({ err }, "analytics snapshot tick failed");
+    }
+  }
 
-  return () => clearInterval(timer);
+  const timer = setInterval(tick, TICK_MS);
+  const snapshotTimer = setInterval(snapshotTick, SNAPSHOT_MS);
+  // Don't keep the event loop alive solely for the timers.
+  timer.unref?.();
+  snapshotTimer.unref?.();
+  log.info("Scheduler started (publish: 60s, analytics: hourly)");
+  void tick(); // run once on boot
+  void snapshotTick();
+
+  return () => {
+    clearInterval(timer);
+    clearInterval(snapshotTimer);
+  };
 }

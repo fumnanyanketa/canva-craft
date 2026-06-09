@@ -8,6 +8,7 @@ import { oauthRoutes } from "./routes/oauth.js";
 import { accountRoutes } from "./routes/accounts.js";
 import { mediaRoutes } from "./routes/media.js";
 import { postRoutes } from "./routes/posts.js";
+import { analyticsRoutes } from "./routes/analytics.js";
 
 export function buildApp() {
   const app = Fastify({
@@ -26,6 +27,7 @@ export function buildApp() {
   app.register(accountRoutes);
   app.register(mediaRoutes);
   app.register(postRoutes);
+  app.register(analyticsRoutes);
 
   return app;
 }
