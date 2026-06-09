@@ -12,6 +12,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartCard } from "@/components/ChartCard";
 import { KpiCard } from "@/components/KpiCard";
+import { AnalyticsDemoNotice } from "@/components/AnalyticsDemoNotice";
 import { BestTimeHeatmap } from "@/components/BestTimeHeatmap";
 import { TopPostsTable } from "@/components/TopPostsTable";
 import { NetworkIcon } from "@/components/NetworkIcon";
@@ -68,6 +69,8 @@ export function Analytics() {
           Per-network deep dive for {profile?.name}.
         </p>
       </div>
+
+      <AnalyticsDemoNotice />
 
       <Tabs value={active} onValueChange={(v) => setScope(v as NetworkId)}>
         <TabsList className="flex h-auto flex-wrap">

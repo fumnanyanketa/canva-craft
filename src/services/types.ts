@@ -59,7 +59,12 @@ export interface MetricsResponse {
   networkBreakdown: { network: NetworkId; value: number }[];
 }
 
-export type PostStatus = "scheduled" | "published" | "draft";
+export type PostStatus =
+  | "draft"
+  | "scheduled"
+  | "publishing"
+  | "published"
+  | "failed";
 
 export interface Post {
   id: string;
@@ -72,6 +77,8 @@ export interface Post {
   scheduledAt: string;
   status: PostStatus;
   metrics?: { likes: number; comments: number; shares: number };
+  /** Real mode: first publish error reported by a platform, if any. */
+  error?: string;
 }
 
 export interface TopPost {

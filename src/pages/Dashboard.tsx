@@ -17,6 +17,7 @@ import { KpiCard } from "@/components/KpiCard";
 import { ChartCard } from "@/components/ChartCard";
 import { TopPostsTable } from "@/components/TopPostsTable";
 import { NetworkIcon } from "@/components/NetworkIcon";
+import { AnalyticsDemoNotice } from "@/components/AnalyticsDemoNotice";
 import { useMetrics, useTopPosts } from "@/hooks/useSocialData";
 import { useAppStore } from "@/store/useAppStore";
 import { NETWORKS } from "@/services/networks";
@@ -53,6 +54,8 @@ export function Dashboard() {
           Overview across all connected networks.
         </p>
       </div>
+
+      <AnalyticsDemoNotice />
 
       {/* KPI cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

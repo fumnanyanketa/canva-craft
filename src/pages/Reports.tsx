@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { TopPostsTable } from "@/components/TopPostsTable";
 import { NetworkIcon } from "@/components/NetworkIcon";
+import { AnalyticsDemoNotice } from "@/components/AnalyticsDemoNotice";
 import { useMetrics, useProfiles, useTopPosts } from "@/hooks/useSocialData";
 import { useAppStore } from "@/store/useAppStore";
 import { NETWORKS } from "@/services/networks";
@@ -66,6 +67,8 @@ export function Reports() {
           <Printer className="h-4 w-4" /> Export PDF
         </Button>
       </div>
+
+      <AnalyticsDemoNotice />
 
       {/* Report header (visible in print) */}
       <Card className="print-break-inside-avoid">

@@ -44,9 +44,11 @@ export async function oauthRoutes(app: FastifyInstance) {
   }>("/api/oauth/:platform/callback", async (request, reply) => {
     const { platform } = request.params;
     const { code, state, error } = request.query;
+    // WEB_ORIGIN may be a comma-separated list (CORS); redirect to the first.
+    const webOrigin = env.WEB_ORIGIN.split(",")[0]!.trim();
     const redirectBack = (status: string) =>
       reply.redirect(
-        `${env.WEB_ORIGIN}/settings/accounts?connect=${platform}&status=${status}`
+        `${webOrigin}/settings/accounts?connect=${platform}&status=${status}`
       );
 
     if (!isPlatform(platform)) return reply.code(400).send({ error: "Unknown platform" });

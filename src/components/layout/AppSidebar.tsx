@@ -4,7 +4,9 @@ import {
   CalendarDays,
   LayoutDashboard,
   FileBarChart,
+  Plug,
 } from "lucide-react";
+import { useIsReal } from "@/store/useAuthStore";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -12,9 +14,11 @@ const NAV = [
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/calendar", label: "Planning", icon: CalendarDays },
   { to: "/reports", label: "Reports", icon: FileBarChart },
+  { to: "/settings/accounts", label: "Accounts", icon: Plug },
 ];
 
 export function AppSidebar() {
+  const isReal = useIsReal();
   return (
     <aside className="no-print sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-card md:flex">
       <div className="flex h-16 items-center gap-2 px-5">
@@ -48,10 +52,21 @@ export function AppSidebar() {
       </nav>
 
       <div className="border-t p-4 text-xs text-muted-foreground">
-        <p className="font-medium text-foreground">Demo data</p>
-        <p className="mt-1">
-          All metrics are simulated. Swap the data client to connect real APIs.
-        </p>
+        {isReal ? (
+          <>
+            <p className="font-medium text-foreground">Live mode</p>
+            <p className="mt-1">
+              Scheduled posts publish to your connected accounts automatically.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="font-medium text-foreground">Demo data</p>
+            <p className="mt-1">
+              All metrics are simulated. Sign in to connect real accounts.
+            </p>
+          </>
+        )}
       </div>
     </aside>
   );

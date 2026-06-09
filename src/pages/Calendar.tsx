@@ -19,16 +19,34 @@ import { Badge } from "@/components/ui/badge";
 import { NetworkIcon } from "@/components/NetworkIcon";
 import { PostComposer } from "@/components/PostComposer";
 import { usePosts, useDeletePost } from "@/hooks/useSocialData";
+import { useRealPosts, useDeleteRealPost } from "@/hooks/useRealData";
 import { useAppStore } from "@/store/useAppStore";
+import { useIsReal } from "@/store/useAuthStore";
 import { cn } from "@/lib/utils";
 import type { Post } from "@/services/types";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export function Calendar() {
+  const isReal = useIsReal();
   const profileId = useAppStore((s) => s.profileId);
-  const { data: posts, isLoading } = usePosts(profileId);
-  const deletePost = useDeletePost(profileId);
+
+  // Demo posts (generated + localStorage) or real posts from the backend —
+  // both arrive in the same UI shape, so the grid below doesn't care.
+  const demoQuery = usePosts(profileId, !isReal);
+  const realQuery = useRealPosts(isReal);
+  const posts = isReal ? realQuery.data : demoQuery.data;
+  const isLoading = isReal ? realQuery.isLoading : demoQuery.isLoading;
+
+  const deleteDemoPost = useDeletePost(profileId);
+  const deleteRealPost = useDeleteRealPost();
+
+  const canDelete = (p: Post) =>
+    isReal
+      ? p.status === "scheduled" || p.status === "draft" || p.status === "failed"
+      : p.id.startsWith("user-");
+  const removePost = (p: Post) =>
+    isReal ? deleteRealPost.mutate(p.id) : deleteDemoPost.mutate(p.id);
 
   const [month, setMonth] = useState(() => new Date());
   const [composerOpen, setComposerOpen] = useState(false);
@@ -150,11 +168,7 @@ export function Calendar() {
                     <CalendarChip
                       key={p.id}
                       post={p}
-                      onDelete={
-                        p.id.startsWith("user-")
-                          ? () => deletePost.mutate(p.id)
-                          : undefined
-                      }
+                      onDelete={canDelete(p) ? () => removePost(p) : undefined}
                     />
                   ))}
                   {dayPosts.length > 3 && (
@@ -191,14 +205,20 @@ function CalendarChip({
   post: Post;
   onDelete?: () => void;
 }) {
-  const published = post.status === "published";
+  const { status } = post;
   return (
     <div
       className={cn(
         "flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px]",
-        published ? "bg-muted" : "bg-accent text-accent-foreground"
+        status === "published" && "bg-muted",
+        status === "failed" &&
+          "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+        status === "publishing" &&
+          "animate-pulse bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+        (status === "scheduled" || status === "draft") &&
+          "bg-accent text-accent-foreground"
       )}
-      title={post.caption}
+      title={post.error ? `${post.caption}\n⚠ ${post.error}` : post.caption}
     >
       <span className="flex shrink-0 items-center gap-0.5">
         {post.networks.slice(0, 2).map((n) => (
@@ -206,19 +226,27 @@ function CalendarChip({
         ))}
       </span>
       <span className="truncate">{post.caption}</span>
-      {published ? (
+      {status === "published" && (
         <Badge variant="success" className="ml-auto shrink-0 px-1 py-0 text-[9px]">
           live
         </Badge>
-      ) : onDelete ? (
-        <button
-          onClick={onDelete}
-          className="ml-auto shrink-0 opacity-60 hover:opacity-100"
-          aria-label="Delete post"
-        >
-          <Trash2 className="h-3 w-3" />
-        </button>
-      ) : null}
+      )}
+      {status === "publishing" && (
+        <span className="ml-auto shrink-0 text-[9px] font-medium">posting…</span>
+      )}
+      {status === "failed" && !onDelete && (
+        <span className="ml-auto shrink-0 text-[9px] font-medium">failed</span>
+      )}
+      {(status === "scheduled" || status === "draft" || status === "failed") &&
+        onDelete && (
+          <button
+            onClick={onDelete}
+            className="ml-auto shrink-0 opacity-60 hover:opacity-100"
+            aria-label="Delete post"
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
+        )}
     </div>
   );
 }

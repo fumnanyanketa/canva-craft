@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Moon, Plus, Sun } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { LogOut, Moon, Plus, Sun } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ProfileSwitcher } from "@/components/ProfileSwitcher";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { PostComposer } from "@/components/PostComposer";
 import { useAppStore } from "@/store/useAppStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { cn } from "@/lib/utils";
 
 const MOBILE_NAV = [
@@ -13,17 +16,26 @@ const MOBILE_NAV = [
   { to: "/analytics", label: "Analytics" },
   { to: "/calendar", label: "Planning" },
   { to: "/reports", label: "Reports" },
+  { to: "/settings/accounts", label: "Accounts" },
 ];
 
 export function TopBar() {
   const theme = useAppStore((s) => s.theme);
   const toggleTheme = useAppStore((s) => s.toggleTheme);
+  const demoMode = useAuthStore((s) => s.demoMode);
+  const logout = useAuthStore((s) => s.logout);
+  const queryClient = useQueryClient();
   const [composerOpen, setComposerOpen] = useState(false);
 
   return (
     <header className="no-print sticky top-0 z-30 border-b bg-background/80 backdrop-blur">
       <div className="flex flex-wrap items-center gap-3 px-4 py-3 lg:px-6">
         <ProfileSwitcher />
+        {demoMode && (
+          <Badge variant="warning" className="hidden sm:inline-flex">
+            Demo mode
+          </Badge>
+        )}
 
         <div className="ml-auto flex items-center gap-2">
           <DateRangePicker />
@@ -43,6 +55,19 @@ export function TopBar() {
           <Button className="h-12" onClick={() => setComposerOpen(true)}>
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">New post</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-12 w-12"
+            aria-label={demoMode ? "Exit demo" : "Log out"}
+            title={demoMode ? "Exit demo" : "Log out"}
+            onClick={() => {
+              queryClient.clear();
+              logout();
+            }}
+          >
+            <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </div>

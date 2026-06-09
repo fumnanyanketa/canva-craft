@@ -43,10 +43,11 @@ export function useBestTime(profileId: string, scope: NetworkId | "all") {
   });
 }
 
-export function usePosts(profileId: string) {
+export function usePosts(profileId: string, enabled = true) {
   return useQuery({
     queryKey: ["posts", profileId],
     queryFn: () => client.getPosts(profileId),
+    enabled,
   });
 }
 
