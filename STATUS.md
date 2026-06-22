@@ -1,6 +1,15 @@
 # Repository Status Report
 
-*Unbiased deep-dive based only on the files actually present. Generated 2026-06-22.*
+*Unbiased deep-dive based only on the files actually present. Generated 2026-06-22; re-verified against the server the same day.*
+
+> **Re-verification note (2026-06-22):** the server was re-queried directly with
+> `git ls-remote --heads origin` (the authoritative source, not the local clone).
+> It returns **exactly 2 branches** — the same 2 this report already covered, so
+> nothing was missed. The only change since first writing: `jolly-franklin` is now
+> **1 commit ahead** of `metricool-alternative-design`, and that one commit is
+> *this STATUS.md file itself*. The code trees of the two branches remain
+> **byte-for-byte identical** (`git diff` shows only STATUS.md). The branch table
+> below is corrected to reflect that.
 
 > **Heads-up on the name:** the repo is called **`canva-craft`**, but nothing in
 > the code has anything to do with Canva or design tooling. The actual project
@@ -11,20 +20,27 @@
 
 ## 1. Branch inventory
 
-There is **no `main` / default branch**. The entire repo is a single linear
-history of **8 commits**, dated **2026-06-05 → 2026-06-09** (≈4 days of work).
-Two branches exist and both point at the **exact same commit** (`0f6f98e`):
+**Authoritative count (from `git ls-remote --heads origin`): 2 branches.** Both
+are visible in the local clone too, so nothing is hidden. There is **no `main` /
+default branch**. The product code is a single linear history of **8 commits**,
+dated **2026-06-05 → 2026-06-09** (≈4 days of work). The two branches share that
+history (merge-base `0f6f98e`) — **neither is an orphan**, and there is **no
+second/separate project hiding in another branch**.
 
-| Branch (local + remote) | Last commit | vs the other branch | What's actually in it |
-| --- | --- | --- | --- |
-| `claude/jolly-franklin-cxhvk0` | 2026-06-09 | 0 ahead / 0 behind | Identical to the other branch. The full app: React/Vite frontend + Fastify/Prisma backend. (This report is added here.) |
-| `claude/metricool-alternative-design-kt8m3` | 2026-06-09 | 0 ahead / 0 behind | **Byte-for-byte identical** to `jolly-franklin`. Same HEAD, same tree. Despite the "alternative-design" name, there is **no alternative design** — it's a duplicate pointer. |
+| Branch (local + remote) | HEAD | Last commit | vs default | What's actually in it |
+| --- | --- | --- | --- | --- |
+| `claude/jolly-franklin-cxhvk0` | `1555430` | 2026-06-22 | +1 / −0 vs the other branch | The full app (React/Vite frontend + Fastify/Prisma backend) **plus this STATUS.md** — the +1 commit is solely this report. |
+| `claude/metricool-alternative-design-kt8m3` | `0f6f98e` | 2026-06-09 | the de-facto baseline | The full app, identical code. Despite the "alternative-design" name there is **no alternative design** — same tree as `jolly-franklin` minus STATUS.md. A redundant duplicate pointer. |
 
-**Stale / stranded / abandoned work:** none in the sense of divergent code — but
-the two branch names are redundant. `claude/metricool-alternative-design-kt8m3`
-is misleadingly named (no different design exists) and can be deleted with zero
-loss. All work lives on one timeline; nothing is forked or stranded. There is no
-`main` to merge into, which itself is a loose end (see Next actions).
+There is no `main`; I treat `metricool-alternative-design` (the original shared
+HEAD) as the de-facto baseline for the ahead/behind comparison above.
+
+**Stale / stranded / abandoned / redundant work:** no *divergent code* anywhere —
+excluding STATUS.md the two branches are byte-for-byte identical (verified with
+`git diff`). The redundancy is the branch names themselves:
+`claude/metricool-alternative-design-kt8m3` is misleadingly named (no different
+design exists) and can be deleted with zero loss. Nothing is forked or stranded.
+The absence of a `main` to merge into is itself a loose end (see Next actions).
 
 ---
 
